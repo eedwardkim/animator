@@ -1,0 +1,516 @@
+/* All styling for the Animator app. Its code only attaches class names. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+/* ── Layout: two columns ─────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a2e;
+  color: #d4c5a0;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* Left column: the code editor. */
+.code-col {
+  width: 42%;
+  min-width: 320px;
+  max-width: 720px;
+  flex-shrink: 0;
+  display: flex;
+  border-right: 1px solid #3a3a5e;
+  background: #0f0f1e;
+}
+
+/* The code column stays in the DOM when collapsed, so CodeMirror keeps its
+   state; hiding it gives the right column the full width. */
+.app.code-hidden .code-col { display: none; }
+
+/* A small glyph button: the code pane's hide and show toggles, and the
+   toast's dismiss button. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a2a4a;
+  color: #d4c5a0;
+  border: 1px solid #6a6aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px 8px;
+}
+.icon-btn:hover { background: #3a3a5e; }
+
+/* A button with a word on it. */
+.btn {
+  background: #2a2a4a;
+  color: #e8d8b0;
+  border: 1px solid #6a6aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+.btn:hover { background: #3a3a5e; }
+.btn.is-primary { background: #4a4a8a; border-color: #8a8aca; color: #fff; }
+.btn.is-primary:hover { background: #5a5a9e; }
+
+/* Every button answers a press by sinking slightly, in well under 150ms. */
+.btn, .icon-btn { transition: background-color 120ms ease, transform 80ms ease; }
+.btn:active, .icon-btn:active { transform: translateY(1px) scale(0.97); }
+.btn:disabled, .icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* One focus ring for everything the keyboard can reach. The editor's is drawn
+   by its theme around the whole editor, just inside its box, because the box
+   clips anything outside it. */
+:focus-visible { outline: 2px solid #ffcb6b; outline-offset: 2px; }
+.cm-content:focus-visible { outline: none; }
+
+/* A small uppercase label for a control. */
+.field-label {
+  color: #b8a888;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The drawing menu and text fields. */
+.select, .text-field {
+  font: inherit;
+  font-size: 13px;
+  color: #e8d8b0;
+  background: #0d0d1a;
+  border: 1px solid #6a6aaa;
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+.select { min-width: 0; max-width: 240px; cursor: pointer; }
+.text-field[aria-invalid="true"] { border-color: #ff8a7a; }
+
+/* ── Code panel (left column) ───────────────────────────────────────────── */
+
+.code-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #1a1a3e;
+  border-bottom: 1px solid #3a3a5e;
+}
+/* How to get the keyboard out of the editor, where Tab indents. */
+.code-hint { margin-left: auto; color: #b8a888; font-size: 11px; }
+.code-title {
+  color: #e8d8b0;
+  font-family: 'Georgia', serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+/* Wrapper holding the editor. */
+.code-editor-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+/* CodeMirror mount node: grows to fill the panel. */
+.code-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: #0d0d1a;
+}
+.code-editor .cm-editor { width: 100%; height: 100%; }
+/* Until CodeMirror arrives from the network, the mount node is empty. */
+.code-editor:empty::before {
+  content: "Loading the editor…";
+  padding: 16px;
+  color: #b8a888;
+  font-size: 13px;
+  animation: breathe 1.6s ease-in-out infinite;
+}
+@keyframes breathe { 50% { opacity: 0.45; } }
+
+/* Collapsible reference of the built-ins available to draw functions. */
+.reference {
+  margin: 8px 14px 0;
+  border: 1px solid #3a3a5e;
+  border-radius: 4px;
+  background: #0d0d1a;
+  overflow: hidden;
+}
+.reference-summary {
+  padding: 6px 12px;
+  cursor: pointer;
+  color: #b8a888;
+  font-family: monospace;
+  font-size: 12px;
+  user-select: none;
+}
+.reference-summary:hover { color: #e8d8b0; }
+/* Inside the box, because .reference clips what is outside it. */
+.reference-summary:focus-visible { outline-offset: -2px; }
+/* The list is long, so it scrolls rather than squeezing the editor out. */
+.reference-body {
+  padding: 4px 12px 10px;
+  border-top: 1px solid #3a3a5e;
+  max-height: 36vh;
+  overflow: auto;
+}
+.reference-group { margin-top: 8px; }
+.reference-group-title {
+  color: #8a8aca;
+  font-family: monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.reference-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 1px 0;
+}
+.reference-sig {
+  color: #89ddff;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre;
+}
+.reference-desc { color: #8a9aaa; font-size: 11px; }
+
+/* ── Stage (right column) ───────────────────────────────────────────────── */
+
+/* The drawing toolbar, the canvas, and the playback controls, top to bottom.
+   If the window is too short for all three, the stage scrolls rather than
+   clipping a control. */
+.stage {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  background: #0a0a14;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 9px 14px;
+  background: #1a1a3e;
+  border-bottom: 1px solid #3a3a5e;
+}
+/* Controls that belong together stay together when the toolbar wraps. */
+.toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.toolbar-group .field-label { margin-right: 2px; }
+/* A keyboard shortcut named on a button. */
+.key {
+  margin-left: 4px;
+  padding: 1px 5px;
+  border: 1px solid #6a6aaa;
+  border-radius: 3px;
+  color: #b8a888;
+  font: inherit;
+  font-size: 11px;
+}
+
+/* Whether the library is saved, pushed to the toolbar's far end. */
+.save-state { margin-left: auto; color: #b8a888; font-size: 12px; }
+.save-state.is-failing { color: #ffb4a8; }
+
+.canvas-area {
+  flex: 1 1 0;
+  min-height: 140px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+/* A centred square that fits the (possibly non-square) animation area. Give your
+   <canvas> this class, so that drawings aren't stretched. */
+.canvas {
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+}
+
+/* What the stage says when the canvas is empty: an error, or a drawing with no
+   paths. It lies over the canvas, so showing it moves nothing, and it stays in
+   the page while empty, so that screen readers hear it fill. */
+.stage-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  border-radius: 6px;
+  color: #b8a888;
+  text-align: center;
+}
+.stage-message:empty { pointer-events: none; }
+.stage-message:not(:empty) {
+  padding: 18px 20px;
+  background: #12121f;
+  border: 1px dashed #4a4a8a;
+}
+.stage-message.is-error {
+  text-align: left;
+  background: #1f1018;
+  border: 1px solid #a04a5a;
+  border-left-width: 4px;
+}
+.stage-message-title {
+  color: #e8d8b0;
+  font-family: 'Georgia', serif;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.stage-message.is-error .stage-message-title { color: #ffb4a8; }
+.stage-message-hint { font-size: 13px; line-height: 1.5; }
+.stage-message-detail {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #f0dcd4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Playback controls ──────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 10px 14px;
+  background: #1a1a2e;
+  border-top: 1px solid #3a3a5e;
+}
+.transport { display: flex; gap: 6px; }
+
+/* A label, a range input that takes the spare width, and its reading. */
+.slider {
+  flex: 1 1 230px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slider-input {
+  flex: 1;
+  min-width: 70px;
+  accent-color: #ffcb6b;
+  cursor: pointer;
+}
+.slider-input:disabled { cursor: not-allowed; opacity: 0.45; }
+/* Wide enough for the longest reading, so the slider doesn't resize as it moves. */
+.slider-reading {
+  min-width: 14ch;
+  white-space: nowrap;
+  color: #e8d8b0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+/* One line on what the canvas is doing. */
+.status { flex: 1 1 100%; min-height: 1.4em; color: #b8a888; font-size: 12px; }
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+
+.dialog {
+  margin: auto;
+  width: min(420px, calc(100vw - 32px));
+  background: #1a1a2e;
+  color: #d4c5a0;
+  border: 1px solid #6a6aaa;
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+.dialog::backdrop { background: rgba(5, 5, 12, 0.72); }
+.dialog-body { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
+.dialog-title {
+  color: #e8d8b0;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: normal;
+}
+/* Room for one line whether or not there is a problem to report. */
+.field-problem { min-height: 1.4em; color: #ffb4a8; font-size: 12px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* A heading that screen readers need and the eye doesn't. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The command palette's results. The option under the cursor is filled, and
+   so is whichever one the pointer is over. */
+.palette-list {
+  list-style: none;
+  max-height: min(46vh, 330px);
+  overflow: auto;
+  border: 1px solid #3a3a5e;
+  border-radius: 4px;
+  background: #0d0d1a;
+}
+.palette-list:empty { display: none; }
+.palette-option { padding: 7px 10px; color: #d4c5a0; font-size: 13px; cursor: pointer; }
+.palette-option:hover { background: #2a2a4a; }
+.palette-option[aria-selected="true"] {
+  background: #4a4a8a;
+  color: #fff;
+  outline: 2px solid #ffcb6b;
+  outline-offset: -2px;
+}
+.palette-hint { color: #b8a888; font-size: 12px; }
+
+/* ── Tour ───────────────────────────────────────────────────────────────── */
+
+/* What the tour is talking about gets a ring, drawn just inside its own box
+   so that nothing clips it. */
+.is-tour-target { outline: 2px solid #ffcb6b; outline-offset: -2px; border-radius: 4px; }
+
+/* The tour's card lives in the canvas area and sits against whichever edge is
+   nearest its target, so it never covers a control. */
+.tour {
+  position: absolute;
+  z-index: 5;
+  width: min(300px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  padding: 14px 16px;
+  background: #1a1a3e;
+  color: #d4c5a0;
+  border: 1px solid #ffcb6b;
+  border-radius: 8px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+  animation: toast-in 140ms ease-out;
+}
+/* Centred with translate, which the entry animation's transform adds to
+   rather than replaces. */
+.tour.is-by-code { left: 12px; top: 50%; translate: 0 -50%; }
+.tour.is-by-controls { left: 12px; bottom: 12px; }
+.tour.is-by-library { left: 12px; top: 12px; }
+.tour.is-by-tools { right: 12px; top: 12px; }
+.tour-count {
+  color: #ffcb6b;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tour-title {
+  margin: 4px 0 6px;
+  color: #e8d8b0;
+  font-family: 'Georgia', serif;
+  font-size: 17px;
+  font-weight: normal;
+}
+.tour-text { font-size: 13px; line-height: 1.5; }
+.tour-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
+
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+
+/* Confirmations appear at the top of the canvas area, which holds no
+   controls, so a toast never covers one however the toolbar wraps. */
+.toast-region {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: max-content;
+  max-width: min(560px, calc(100% - 24px));
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  background: #2a2a4a;
+  color: #e8d8b0;
+  border: 1px solid #6a6aaa;
+  border-left: 4px solid #c3e88d;
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+  line-height: 1.4;
+  animation: toast-in 140ms ease-out;
+}
+.toast.is-bad { border-left-color: #ff8a7a; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ── Narrow and short windows ───────────────────────────────────────────── */
+
+/* Too narrow for two columns: the stage goes on top and the code beneath. */
+@media (max-width: 760px) {
+  .app { flex-direction: column-reverse; }
+  .code-col {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 44%;
+    border-right: none;
+    border-top: 1px solid #3a3a5e;
+  }
+  .select { max-width: 100%; }
+  /* The code column is short here, so the reference takes less of it, scrolls
+     inside whatever it is given, and always leaves the editor some room. */
+  .code-editor-wrap { min-height: 72px; }
+  .code-hint { display: none; }
+  .reference[open] { display: flex; flex-direction: column; min-height: 0; flex-shrink: 1; }
+  .reference-summary { flex: none; }
+  .reference-body { max-height: 14vh; min-height: 0; }
+}
+
+/* Too short to spare the padding. */
+@media (max-height: 560px) {
+  .toolbar, .controls { padding-top: 5px; padding-bottom: 5px; }
+  .canvas-area { min-height: 110px; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+
+/* Transitions become cuts. (The app itself shows drawings finished.) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
